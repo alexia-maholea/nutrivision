@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 public class RegisterDto {
 
     private String email;
-    private String username;
+    private String name;
     private String password;
 
     public String getEmail() {
@@ -18,12 +18,12 @@ public class RegisterDto {
         return this;
     }
 
-    public String getUsername() {
-        return username;
+    public String getName() {
+        return name;
     }
 
-    public RegisterDto setUsername(String username) {
-        this.username = username;
+    public RegisterDto setName(String name) {
+        this.name = name;
         return this;
     }
 

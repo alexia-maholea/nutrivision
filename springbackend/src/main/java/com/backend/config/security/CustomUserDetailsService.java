@@ -1,9 +1,7 @@
 package com.backend.config.security;
 
-import com.backend.entity.Role;
 import com.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,10 +9,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -26,11 +22,12 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<com.backend.entity.User> optionalUser = userRepository.findUserByEmail(email);
         if (optionalUser.isPresent()) {
             com.backend.entity.User user = optionalUser.get();
-            return new User(user.getEmail(), user.getPassword(), mapRolesToAuthorities(user.getRoles()));
-        } else
+            return new User(
+                    user.getEmail(),
+                    user.getPassword(),
+                    List.of(new SimpleGrantedAuthority(user.getRole().name())));
+        } else {
             throw new UsernameNotFoundException("User not found");
-    }
-    private Collection<GrantedAuthority> mapRolesToAuthorities(List<Role> roles){
-        return roles.stream().map(role->new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
+        }
     }
 }

@@ -1,10 +1,9 @@
 package com.backend.service;
 
 import com.backend.config.security.JwtGenerator;
-import com.backend.entity.Role;
 import com.backend.entity.User;
+import com.backend.entity.enums.UserRole;
 import com.backend.exception.BadRequestException;
-import com.backend.repository.RoleRepository;
 import com.backend.repository.UserRepository;
 import com.backend.service.dto.LoginDto;
 import com.backend.service.dto.RegisterDto;
@@ -17,9 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -31,33 +27,27 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
     private AuthenticationManager authenticationManager;
 
     @Autowired
     private JwtGenerator jwtGenerator;
 
-
     public void register(RegisterDto registerDto) {
 
-        if(userRepository.existsUserByEmail(registerDto.getEmail())) {
+        if (userRepository.existsUserByEmail(registerDto.getEmail())) {
             throw new BadRequestException("Email is already used");
         }
-
-        List<Role> roleList = new ArrayList<>();
-        roleList.add(roleRepository.findRoleByName("USER").get());
 
         userRepository.save(new User()
                 .setEmail(registerDto.getEmail())
                 .setPassword(passwordEncoder.encode(registerDto.getPassword()))
-                .setUsername(registerDto.getUsername())
-                .setRoles(roleList));
+                .setName(registerDto.getName())
+                .setRole(UserRole.USER));
     }
 
     public String login(LoginDto loginDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(loginDto.getEmail());
-        if(optionalUser.isEmpty()) {
+        if (optionalUser.isEmpty()) {
             throw new BadRequestException("Wrong credentials");
         }
 
