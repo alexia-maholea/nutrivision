@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.mobylab</groupId>
-	<artifactId>springbackend</artifactId>
+	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>auth-server</name>
 	<description>Authorization Server for natural language to sql thesis</description>
