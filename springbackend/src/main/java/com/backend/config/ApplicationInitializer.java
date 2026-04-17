@@ -1,5 +1,6 @@
 package com.backend.config;
 
+import com.backend.entity.Profile;
 import com.backend.entity.User;
 import com.backend.entity.enums.UserRole;
 import com.backend.repository.UserRepository;
@@ -37,6 +38,9 @@ public class ApplicationInitializer implements CommandLineRunner {
                     .setEmail(adminEmail)
                     .setPassword(passwordEncoder.encode(adminPassword))
                     .setRole(UserRole.ADMIN);
+            Profile adminProfile = new Profile();
+            adminProfile.setUser(initAdmin);
+            initAdmin.setProfile(adminProfile);
             userRepository.save(initAdmin);
         }
     }

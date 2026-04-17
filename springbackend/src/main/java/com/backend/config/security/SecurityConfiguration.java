@@ -1,10 +1,11 @@
 package com.backend.config.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,22 +25,27 @@ public class SecurityConfiguration {
     @Value("${vars.security.enable}")
     private boolean securityEnabled;
 
-    private JwtAuthEntryPoint authEntryPoint;
+    private final JwtAuthEntryPoint authEntryPoint;
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
+    public SecurityConfiguration(JwtAuthEntryPoint authEntryPoint) {
+        this.authEntryPoint = authEntryPoint;
+    }
 
     @Bean
-    public SecurityFilterChain authServerSecurityFilterChain (HttpSecurity http) throws Exception{
+    public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(Customizer.withDefaults());
         if (securityEnabled) {
-           http.authorizeHttpRequests(auth -> auth
-                   .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register",
-                           "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                   .anyRequest().authenticated())
-                   .exceptionHandling((exception)-> exception.authenticationEntryPoint(authEntryPoint))
-                   .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-           http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            http.authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .requestMatchers("/auth.html", "/",
+                            "/api/v1/ping",
+                            "/api/v1/auth/login", "/api/v1/auth/register",
+                            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .anyRequest().authenticated())
+                    .exceptionHandling(exception -> exception.authenticationEntryPoint(authEntryPoint))
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         } else {
             http.authorizeHttpRequests(auth -> auth
                     .anyRequest().permitAll());
@@ -48,17 +54,17 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
-        return  authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
-    PasswordEncoder passwordEncoder(){
+    PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(){
-        return new JwtAuthenticationFilter();
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtGenerator jwtGenerator, CustomUserDetailsService userDetailsService) {
+        return new JwtAuthenticationFilter(jwtGenerator, userDetailsService);
     }
 }

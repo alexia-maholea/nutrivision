@@ -1,6 +1,7 @@
 package com.backend.service;
 
 import com.backend.config.security.JwtGenerator;
+import com.backend.entity.Profile;
 import com.backend.entity.User;
 import com.backend.entity.enums.UserRole;
 import com.backend.exception.BadRequestException;
@@ -38,11 +39,15 @@ public class AuthService {
             throw new BadRequestException("Email is already used");
         }
 
-        userRepository.save(new User()
+        User user = new User()
                 .setEmail(registerDto.getEmail())
                 .setPassword(passwordEncoder.encode(registerDto.getPassword()))
                 .setName(registerDto.getName())
-                .setRole(UserRole.USER));
+                .setRole(UserRole.USER);
+        Profile profile = new Profile();
+        profile.setUser(user);
+        user.setProfile(profile);
+        userRepository.save(user);
     }
 
     public String login(LoginDto loginDto) {
