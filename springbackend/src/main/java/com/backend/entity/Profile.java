@@ -57,6 +57,10 @@ public class Profile {
     @Column(name = "daily_calories_target")
     private Integer dailyCaloriesTarget;
 
+    /** Număr de sloturi de masă pe zi (ex. 3 sau 4). Folosit la calendar. */
+    @Column(name = "meals_per_day", nullable = false)
+    private Integer mealsPerDay = 3;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "profile_dietary_tag",
@@ -144,6 +148,15 @@ public class Profile {
 
     public Profile setDailyCaloriesTarget(Integer dailyCaloriesTarget) {
         this.dailyCaloriesTarget = dailyCaloriesTarget;
+        return this;
+    }
+
+    public Integer getMealsPerDay() {
+        return mealsPerDay;
+    }
+
+    public Profile setMealsPerDay(Integer mealsPerDay) {
+        this.mealsPerDay = mealsPerDay;
         return this;
     }
 

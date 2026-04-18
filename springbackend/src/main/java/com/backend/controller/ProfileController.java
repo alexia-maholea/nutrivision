@@ -2,10 +2,14 @@ package com.backend.controller;
 
 import com.backend.service.ProfileService;
 import com.backend.service.dto.ProfileResponseDto;
+import com.backend.service.dto.ProfileUpdateRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.backend.service.dto.MealsPerDayRequestDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,8 +25,20 @@ public class ProfileController implements SecuredRestController {
     }
 
     @GetMapping
-    @Operation(summary = "Get my profile", description = "Returns goals, activity level, calorie target, anthropometrics, and dietary restriction tags.")
+    @Operation(summary = "Get my profile", description = "Returns goals, activity level, calorie target, anthropometrics, dietary restriction tags, and mealsPerDay for the calendar.")
     public ResponseEntity<ProfileResponseDto> getMyProfile() {
         return ResponseEntity.ok(profileService.getCurrentUserProfile());
+    }
+
+    @PatchMapping
+    @Operation(summary = "Update my profile", description = "Partial update for age/height/weight/gender/activityLevel/goal/dailyCaloriesTarget and dietaryRestrictionTagIds.")
+    public ResponseEntity<ProfileResponseDto> patchMyProfile(@RequestBody ProfileUpdateRequestDto body) {
+        return ResponseEntity.ok(profileService.updateCurrentUserProfile(body));
+    }
+
+    @PatchMapping("/meals-per-day")
+    @Operation(summary = "Set meals per day", description = "How many meal slots you want each day in the calendar (2–10).")
+    public ResponseEntity<ProfileResponseDto> patchMealsPerDay(@RequestBody MealsPerDayRequestDto body) {
+        return ResponseEntity.ok(profileService.updateMealsPerDay(body));
     }
 }

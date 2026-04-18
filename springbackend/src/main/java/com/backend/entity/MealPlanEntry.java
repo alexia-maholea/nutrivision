@@ -31,6 +31,10 @@ public class MealPlanEntry {
     @Column(name = "meal_type")
     private MealType mealType;
 
+    /** 0 .. mealsPerDay-1 — care „găură” din zi ocupă această rețetă. */
+    @Column(name = "meal_slot_index", nullable = false)
+    private Integer mealSlotIndex = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meal_plan_id", nullable = false)
     private MealPlan mealPlan;
@@ -63,6 +67,15 @@ public class MealPlanEntry {
 
     public MealPlanEntry setMealType(MealType mealType) {
         this.mealType = mealType;
+        return this;
+    }
+
+    public Integer getMealSlotIndex() {
+        return mealSlotIndex;
+    }
+
+    public MealPlanEntry setMealSlotIndex(Integer mealSlotIndex) {
+        this.mealSlotIndex = mealSlotIndex;
         return this;
     }
 

@@ -8,7 +8,6 @@ import java.util.Optional;
 
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
 
-    /** Încarcă user-ul; tag-urile se încarcă lazy (al doilea SELECT), ca să evităm un singur SQL uriaș. */
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"user", "dietaryRestrictions"})
     Optional<Profile> findByUser_Email(String email);
 }

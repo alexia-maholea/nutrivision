@@ -23,6 +23,9 @@ public class ProfileResponseDto {
     private Goal goal;
     private Integer dailyCaloriesTarget;
 
+    /** Câte mese (sloturi) pe zi în calendar. */
+    private Integer mealsPerDay;
+
     private List<DietaryTagDto> dietaryRestrictions = new ArrayList<>();
 
     public String getEmail() {
@@ -103,6 +106,15 @@ public class ProfileResponseDto {
 
     public ProfileResponseDto setDailyCaloriesTarget(Integer dailyCaloriesTarget) {
         this.dailyCaloriesTarget = dailyCaloriesTarget;
+        return this;
+    }
+
+    public Integer getMealsPerDay() {
+        return mealsPerDay;
+    }
+
+    public ProfileResponseDto setMealsPerDay(Integer mealsPerDay) {
+        this.mealsPerDay = mealsPerDay;
         return this;
     }
 
