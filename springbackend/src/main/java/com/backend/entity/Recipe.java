@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import java.util.ArrayList;
@@ -54,14 +55,8 @@ public class Recipe {
     @Column(name = "difficulty")
     private RecipeDifficulty difficulty;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "recipe_ingredient",
-            schema = "project",
-            joinColumns = @JoinColumn(name = "recipe_id"),
-            inverseJoinColumns = @JoinColumn(name = "ingredient_id")
-    )
-    private Set<Ingredient> ingredients = new HashSet<>();
+    @OneToMany(mappedBy = "recipe", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -77,6 +72,10 @@ public class Recipe {
 
     @OneToMany(mappedBy = "recipe")
     private List<MealPlanEntry> mealPlanEntries = new ArrayList<>();
+
+    @OneToMany(mappedBy = "recipe", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("stepNo ASC")
+    private List<RecipeStep> steps = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -159,12 +158,12 @@ public class Recipe {
         return this;
     }
 
-    public Set<Ingredient> getIngredients() {
-        return ingredients;
+    public List<RecipeIngredient> getRecipeIngredients() {
+        return recipeIngredients;
     }
 
-    public Recipe setIngredients(Set<Ingredient> ingredients) {
-        this.ingredients = ingredients;
+    public Recipe setRecipeIngredients(List<RecipeIngredient> recipeIngredients) {
+        this.recipeIngredients = recipeIngredients;
         return this;
     }
 
@@ -192,6 +191,15 @@ public class Recipe {
 
     public Recipe setMealPlanEntries(List<MealPlanEntry> mealPlanEntries) {
         this.mealPlanEntries = mealPlanEntries;
+        return this;
+    }
+
+    public List<RecipeStep> getSteps() {
+        return steps;
+    }
+
+    public Recipe setSteps(List<RecipeStep> steps) {
+        this.steps = steps;
         return this;
     }
 }

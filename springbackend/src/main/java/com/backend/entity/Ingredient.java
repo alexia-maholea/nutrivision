@@ -6,11 +6,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "ingredient", schema = "project")
@@ -27,8 +27,8 @@ public class Ingredient {
     @Column(name = "calories_per_100g")
     private Double caloriesPer100g;
 
-    @ManyToMany(mappedBy = "ingredients", fetch = FetchType.LAZY)
-    private Set<Recipe> recipes = new HashSet<>();
+    @OneToMany(mappedBy = "ingredient", fetch = FetchType.LAZY)
+    private List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -57,12 +57,12 @@ public class Ingredient {
         return this;
     }
 
-    public Set<Recipe> getRecipes() {
-        return recipes;
+    public List<RecipeIngredient> getRecipeIngredients() {
+        return recipeIngredients;
     }
 
-    public Ingredient setRecipes(Set<Recipe> recipes) {
-        this.recipes = recipes;
+    public Ingredient setRecipeIngredients(List<RecipeIngredient> recipeIngredients) {
+        this.recipeIngredients = recipeIngredients;
         return this;
     }
 }
