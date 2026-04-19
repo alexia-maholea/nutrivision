@@ -6,6 +6,7 @@ import com.backend.repository.ProfileRepository;
 import com.backend.repository.UserRepository;
 import com.backend.service.RecipeRecommendationService;
 import com.backend.service.RecipeService;
+import com.backend.service.dto.PagedResponseDto;
 import com.backend.service.dto.RecipeCreateRequestDto;
 import com.backend.service.dto.RecipeDetailDto;
 import com.backend.service.dto.RecipeSummaryDto;
@@ -15,17 +16,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/recipes")
@@ -49,9 +51,13 @@ public class RecipeController implements SecuredRestController {
     }
 
     @GetMapping("/all")
-    @Operation(summary = "All recipes", description = "Returns all recipes from the catalog, ordered by title.")
-    public ResponseEntity<List<RecipeSummaryDto>> allRecipes() {
-        return ResponseEntity.ok(recipeRecommendationService.allRecipes());
+    @Operation(summary = "All recipes", description = "Returns paginated recipes from the catalog, with optional title search.")
+    public ResponseEntity<PagedResponseDto<RecipeSummaryDto>> allRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String q) {
+        return ResponseEntity.ok(PagedResponseDto.from(
+                recipeRecommendationService.allRecipes(q, PageRequest.of(page, size, Sort.by("title").ascending()))));
     }
 
     @GetMapping("/{id}")
@@ -61,15 +67,22 @@ public class RecipeController implements SecuredRestController {
     }
 
     @GetMapping("/my")
-    @Operation(summary = "My recipes", description = "Returns recipes compatible with your dietary restrictions.")
-    public ResponseEntity<List<RecipeSummaryDto>> myRecipes() {
-        return ResponseEntity.ok(recipeRecommendationService.recommendedForProfile(getCurrentUserProfile()));
+    @Operation(summary = "My recipes", description = "Returns paginated recipes compatible with your dietary restrictions, with optional title search.")
+    public ResponseEntity<PagedResponseDto<RecipeSummaryDto>> myRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String q) {
+        return ResponseEntity.ok(PagedResponseDto.from(recipeRecommendationService.recommendedForProfile(
+                getCurrentUserProfile(), q, PageRequest.of(page, size, Sort.by("title").ascending()))));
     }
 
     @GetMapping("/recommended")
     @Operation(summary = "Recommended recipes", description = "Alias for /my. Recipes that include all dietary restriction tags from your profile.")
-    public ResponseEntity<List<RecipeSummaryDto>> recommended() {
-        return myRecipes();
+    public ResponseEntity<PagedResponseDto<RecipeSummaryDto>> recommended(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String q) {
+        return myRecipes(page, size, q);
     }
 
     private Profile getCurrentUserProfile() {
@@ -96,7 +109,7 @@ public class RecipeController implements SecuredRestController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Delete recipe", description = "Deletes a recipe. Admin role required.")
+    @Operation(summary = "Delete recipe", description = "Deletes a recipe. Returns 204 on success, 404 if recipe is missing, 409 if recipe is referenced by meal plans.")
     public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
         recipeService.deleteRecipe(id);
         return ResponseEntity.noContent().build();
