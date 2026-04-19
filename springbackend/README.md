@@ -1,18 +1,78 @@
-# MobyLabWebProgramming
+# NutriVision Spring Backend
 
-This is an example application to teach students the basics of web programming.
+Backend API for NutriVision, built with Spring Boot, PostgreSQL, Flyway, and Spring Security (JWT).
 
-To start working with the backend install docker and docker compose from https://docs.docker.com/engine/install/ and enter the command below to launch the Postgresql database while in the Deployment folder:
+## Prerequisites
 
-```shell showLineNumbers
-docker-compose -f .\docker-compose.yml -p mobylab-app-db up -d
+- Java 17+
+- Maven (or use included wrapper `mvnw` / `mvnw.cmd`)
+- PostgreSQL running on `localhost:5432`
+  - default DB: `postgres`
+  - default user/password: `postgres` / `postgres`
+
+## Project Setup
+
+1. Clone the repository and open the `springbackend` folder.
+2. Ensure PostgreSQL is running.
+3. Create a `.env` file in project root for mail settings.
+
+Notes:
+
+- `.env` is loaded via `spring.config.import: optional:file:.env[.properties]`.
+- If `.env` is missing, app starts with defaults from `application.yml`.
+
+## Database (Docker Option)
+
+If you want to start PostgreSQL with Docker Compose:
+
+```powershell
+docker compose up -d
 ```
 
-You can use PGAdmin (https://www.pgadmin.org/) or DBeaver (https://dbeaver.io/download/) to access the database on localhost:5432 with database/user/password "postgres".
+This starts `postgres:13.2-alpine` mapped to `localhost:5432`.
 
-In order to run the application you need to have maven installed (https://maven.apache.org/install.html) and run the following commands:
+## Run the Backend
 
-```shell showLineNumbers
-mvn clean install
-mvn spring-boot:run
+Windows PowerShell:
+
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
+
+Linux/macOS:
+
+```bash
+./mvnw spring-boot:run
+```
+
+App default URL:
+
+- `http://localhost:8090`
+
+Flyway migrations run automatically at startup.
+
+## Swagger / API Docs
+
+After the app starts, Swagger is available at:
+
+- `http://localhost:8090/swagger-ui/index.html`
+
+OpenAPI JSON:
+
+- `http://localhost:8090/v3/api-docs`
+
+## Authentication Quick Start
+
+Public endpoints:
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+
+Most other endpoints require `Authorization: Bearer <token>`.
+
+Default seeded admin credentials (from config):
+
+- email: `admin@admin.com`
+- password: `admin`
+
+
