@@ -9,6 +9,7 @@ import com.backend.exception.BadRequestException;
 import com.backend.repository.DietaryTagRepository;
 import com.backend.repository.IngredientRepository;
 import com.backend.repository.RecipeRepository;
+import com.backend.service.event.RecipeCreatedEvent;
 import com.backend.service.dto.RecipeCreateRequestDto;
 import com.backend.service.dto.DietaryTagDto;
 import com.backend.service.dto.RecipeDetailDto;
@@ -18,6 +19,9 @@ import com.backend.service.dto.RecipeStepDto;
 import com.backend.service.dto.RecipeStepInputDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -32,13 +36,16 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final DietaryTagRepository dietaryTagRepository;
     private final IngredientRepository ingredientRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RecipeService(RecipeRepository recipeRepository,
                          DietaryTagRepository dietaryTagRepository,
-                         IngredientRepository ingredientRepository) {
+                         IngredientRepository ingredientRepository,
+                         ApplicationEventPublisher eventPublisher) {
         this.recipeRepository = recipeRepository;
         this.dietaryTagRepository = dietaryTagRepository;
         this.ingredientRepository = ingredientRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public RecipeDetailDto createRecipe(RecipeCreateRequestDto request) {
@@ -81,7 +88,15 @@ public class RecipeService {
         applySteps(recipe, request.getSteps());
 
         Recipe saved = recipeRepository.save(recipe);
+        eventPublisher.publishEvent(new RecipeCreatedEvent(saved.getId(), saved.getTitle()));
         return toDetail(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public RecipeDetailDto getRecipeById(Long id) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+        return toDetail(recipe);
     }
 
     private void applyDietaryTags(Recipe recipe, List<Long> dietaryTagIds) {

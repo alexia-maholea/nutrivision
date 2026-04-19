@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,6 +50,12 @@ public class RecipeController implements SecuredRestController {
     @Operation(summary = "All recipes", description = "Returns all recipes from the catalog, ordered by title.")
     public ResponseEntity<List<RecipeSummaryDto>> allRecipes() {
         return ResponseEntity.ok(recipeRecommendationService.allRecipes());
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Recipe details", description = "Returns full details for a recipe: nutrition, dietary tags, ingredients, and steps.")
+    public ResponseEntity<RecipeDetailDto> recipeById(@PathVariable Long id) {
+        return ResponseEntity.ok(recipeService.getRecipeById(id));
     }
 
     @GetMapping("/my")

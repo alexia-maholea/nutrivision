@@ -1,8 +1,10 @@
 package com.backend.controller;
 
 import com.backend.service.ProfileService;
+import com.backend.service.NewsletterService;
 import com.backend.service.dto.ProfileResponseDto;
 import com.backend.service.dto.ProfileUpdateRequestDto;
+import com.backend.service.dto.NewsletterSubscriptionRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.backend.service.dto.MealsPerDayRequestDto;
@@ -19,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProfileController implements SecuredRestController {
 
     private final ProfileService profileService;
+    private final NewsletterService newsletterService;
 
-    public ProfileController(ProfileService profileService) {
+    public ProfileController(ProfileService profileService, NewsletterService newsletterService) {
         this.profileService = profileService;
+        this.newsletterService = newsletterService;
     }
 
     @GetMapping
@@ -40,5 +44,12 @@ public class ProfileController implements SecuredRestController {
     @Operation(summary = "Set meals per day", description = "How many meal slots you want each day in the calendar (2–10).")
     public ResponseEntity<ProfileResponseDto> patchMealsPerDay(@RequestBody MealsPerDayRequestDto body) {
         return ResponseEntity.ok(profileService.updateMealsPerDay(body));
+    }
+
+    @PatchMapping("/newsletter")
+    @Operation(summary = "Subscribe/unsubscribe newsletter", description = "Set true to receive email when new recipes are added.")
+    public ResponseEntity<Void> patchNewsletter(@RequestBody NewsletterSubscriptionRequestDto body) {
+        newsletterService.updateMySubscription(body);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -47,6 +47,17 @@ public class ProfileService {
         Profile profile = profileRepository.findByUser_Email(email)
                 .orElseGet(() -> createProfileForUser(user));
 
+        return mapProfile(profile);
+    }
+
+    public List<ProfileResponseDto> getAllProfilesForAdmin() {
+        return profileRepository.findAllForAdminListing().stream()
+                .map(this::mapProfile)
+                .collect(Collectors.toList());
+    }
+
+    private ProfileResponseDto mapProfile(Profile profile) {
+
         ProfileResponseDto dto = new ProfileResponseDto()
                 .setEmail(profile.getUser().getEmail())
                 .setName(profile.getUser().getName())
