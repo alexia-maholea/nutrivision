@@ -5,6 +5,7 @@ import com.backend.entity.Profile;
 import com.backend.entity.User;
 import com.backend.entity.enums.UserRole;
 import com.backend.exception.BadRequestException;
+import com.backend.exception.ConflictException;
 import com.backend.repository.UserRepository;
 import com.backend.service.dto.LoginDto;
 import com.backend.service.dto.RegisterDto;
@@ -36,7 +37,7 @@ public class AuthService {
     public void register(RegisterDto registerDto) {
 
         if (userRepository.existsUserByEmail(registerDto.getEmail())) {
-            throw new BadRequestException("Email is already used");
+            throw new ConflictException("Email already exists");
         }
 
         User user = new User()

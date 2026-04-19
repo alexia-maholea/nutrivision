@@ -14,6 +14,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
     List<Recipe> findAllByOrderByTitleAsc();
 
+    boolean existsByTitleIgnoreCase(String title);
+
+    boolean existsByTitleIgnoreCaseAndIdNot(String title, Long id);
+
     Page<Recipe> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 
     @Query(value = """

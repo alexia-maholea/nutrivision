@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class ErrorObject {
@@ -15,6 +17,8 @@ public class ErrorObject {
     @JsonProperty("error_timestamp")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timestamp;
+    @JsonProperty("error_details")
+    private List<String> details = new ArrayList<>();
 
     public Integer getStatusCode() {
         return statusCode;
@@ -40,6 +44,15 @@ public class ErrorObject {
 
     public ErrorObject setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+        return this;
+    }
+
+    public List<String> getDetails() {
+        return details;
+    }
+
+    public ErrorObject setDetails(List<String> details) {
+        this.details = details;
         return this;
     }
 }

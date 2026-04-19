@@ -6,6 +6,7 @@ import com.backend.entity.Recipe;
 import com.backend.entity.RecipeIngredient;
 import com.backend.entity.RecipeStep;
 import com.backend.exception.BadRequestException;
+import com.backend.exception.ConflictException;
 import com.backend.repository.DietaryTagRepository;
 import com.backend.repository.IngredientRepository;
 import com.backend.repository.RecipeRepository;
@@ -55,6 +56,10 @@ public class RecipeService {
         validateRequest(request);
         String title = request.getTitle().trim();
 
+        if (recipeRepository.existsByTitleIgnoreCase(title)) {
+            throw new ConflictException("Recipe already exists with title: " + title);
+        }
+
         Recipe recipe = new Recipe()
                 .setTitle(title)
                 .setDescription(request.getDescription())
@@ -76,11 +81,16 @@ public class RecipeService {
 
     public RecipeDetailDto updateRecipe(Long id, RecipeCreateRequestDto request) {
         validateRequest(request);
+        String title = request.getTitle().trim();
 
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
 
-        recipe.setTitle(request.getTitle().trim())
+        if (recipeRepository.existsByTitleIgnoreCaseAndIdNot(title, id)) {
+            throw new ConflictException("Recipe already exists with title: " + title);
+        }
+
+        recipe.setTitle(title)
                 .setDescription(request.getDescription())
                 .setCalories(request.getCalories())
                 .setProtein(request.getProtein())
