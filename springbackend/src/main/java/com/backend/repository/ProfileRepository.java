@@ -20,22 +20,32 @@ public interface ProfileRepository extends JpaRepository<Profile, Long> {
     @Query("SELECT p FROM Profile p ORDER BY p.id ASC")
     List<Profile> findAllForAdminListing();
 
-    @EntityGraph(attributePaths = {"user", "dietaryRestrictions"})
+    @EntityGraph(attributePaths = {"user"})
+    @Query(value = """
+            SELECT p
+            FROM Profile p
+            ORDER BY p.id ASC
+            """,
+            countQuery = """
+            SELECT COUNT(p)
+            FROM Profile p
+            """)
+    Page<Profile> findAllForAdminListing(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
     @Query(value = """
             SELECT p
             FROM Profile p
             JOIN p.user u
-            WHERE (:q IS NULL
-               OR LOWER(u.name) LIKE LOWER(CONCAT('%', :q, '%'))
-               OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%')))
+            WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', CAST(:q AS text), '%'))
+               OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:q AS text), '%'))
             """,
             countQuery = """
             SELECT COUNT(p)
             FROM Profile p
             JOIN p.user u
-            WHERE (:q IS NULL
-               OR LOWER(u.name) LIKE LOWER(CONCAT('%', :q, '%'))
-               OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%')))
+            WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', CAST(:q AS text), '%'))
+               OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:q AS text), '%'))
             """)
     Page<Profile> searchForAdminListing(@Param("q") String q, Pageable pageable);
 }

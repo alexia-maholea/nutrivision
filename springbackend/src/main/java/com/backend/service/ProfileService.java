@@ -73,7 +73,10 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public Page<ProfileResponseDto> getProfilesForAdmin(String q, Pageable pageable) {
-        return profileRepository.searchForAdminListing(normalizeQuery(q), pageable)
+        String normalizedQ = normalizeQuery(q);
+        return (normalizedQ == null
+                ? profileRepository.findAllForAdminListing(pageable)
+                : profileRepository.searchForAdminListing(normalizedQ, pageable))
                 .map(this::mapProfile);
     }
 
