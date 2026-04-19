@@ -1,8 +1,11 @@
 package com.backend.repository;
 
 import com.backend.entity.Feedback;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,28 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
               )
             """)
     List<String> findSubscribedNewsletterEmails();
+
+    @Query(value = """
+            SELECT f
+            FROM Feedback f
+            JOIN f.user u
+            WHERE f.category = 'GENERAL'
+              AND (:q IS NULL
+                OR LOWER(COALESCE(f.message, '')) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(u.name) LIKE LOWER(CONCAT('%', :q, '%')))
+            """,
+            countQuery = """
+            SELECT COUNT(f)
+            FROM Feedback f
+            JOIN f.user u
+            WHERE f.category = 'GENERAL'
+              AND (:q IS NULL
+                OR LOWER(COALESCE(f.message, '')) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(u.name) LIKE LOWER(CONCAT('%', :q, '%')))
+            """)
+    Page<Feedback> searchGeneralFeedback(@Param("q") String q, Pageable pageable);
 }
 
 
