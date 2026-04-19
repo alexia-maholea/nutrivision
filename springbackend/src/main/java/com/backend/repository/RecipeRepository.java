@@ -44,4 +44,30 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
                                                   @Param("requiredTagCount") long requiredTagCount,
                                                   @Param("q") String q,
                                                   Pageable pageable);
+
+    @Query(value = """
+            SELECT r
+            FROM Recipe r
+            WHERE (
+              SELECT COUNT(DISTINCT dt.id)
+              FROM Recipe r2
+              JOIN r2.dietaryTags dt
+              WHERE r2 = r
+                AND dt.id IN :requiredTagIds
+            ) = :requiredTagCount
+            """,
+            countQuery = """
+            SELECT COUNT(r)
+            FROM Recipe r
+            WHERE (
+              SELECT COUNT(DISTINCT dt.id)
+              FROM Recipe r2
+              JOIN r2.dietaryTags dt
+              WHERE r2 = r
+                AND dt.id IN :requiredTagIds
+            ) = :requiredTagCount
+            """)
+    Page<Recipe> findRecommendedByRequiredTagIds(@Param("requiredTagIds") Set<Long> requiredTagIds,
+                                                 @Param("requiredTagCount") long requiredTagCount,
+                                                 Pageable pageable);
 }

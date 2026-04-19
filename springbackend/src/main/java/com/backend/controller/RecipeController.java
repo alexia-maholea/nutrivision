@@ -76,15 +76,6 @@ public class RecipeController implements SecuredRestController {
                 getCurrentUserProfile(), q, PageRequest.of(page, size, Sort.by("title").ascending()))));
     }
 
-    @GetMapping("/recommended")
-    @Operation(summary = "Recommended recipes", description = "Alias for /my. Recipes that include all dietary restriction tags from your profile.")
-    public ResponseEntity<PagedResponseDto<RecipeSummaryDto>> recommended(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String q) {
-        return myRecipes(page, size, q);
-    }
-
     private Profile getCurrentUserProfile() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findUserByEmail(email)
@@ -95,21 +86,21 @@ public class RecipeController implements SecuredRestController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Add a new recipe", description = "Creates a new recipe. Admin role required.")
+    @Operation(summary = "Add a new recipe (ADMIN only)", description = "Creates a new recipe. Access: ADMIN only.")
     public ResponseEntity<RecipeDetailDto> createRecipe(@RequestBody RecipeCreateRequestDto body) {
         return ResponseEntity.status(HttpStatus.CREATED).body(recipeService.createRecipe(body));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Update recipe", description = "Updates an existing recipe. Admin role required.")
+    @Operation(summary = "Update recipe (ADMIN only)", description = "Updates an existing recipe. Access: ADMIN only.")
     public ResponseEntity<RecipeDetailDto> updateRecipe(@PathVariable Long id, @RequestBody RecipeCreateRequestDto body) {
         return ResponseEntity.ok(recipeService.updateRecipe(id, body));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    @Operation(summary = "Delete recipe", description = "Deletes a recipe. Returns 204 on success, 404 if recipe is missing, 409 if recipe is referenced by meal plans.")
+    @Operation(summary = "Delete recipe (ADMIN only)", description = "Deletes a recipe. Access: ADMIN only. Returns 204 on success, 404 if recipe is missing, 409 if recipe is referenced by meal plans.")
     public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
         recipeService.deleteRecipe(id);
         return ResponseEntity.noContent().build();

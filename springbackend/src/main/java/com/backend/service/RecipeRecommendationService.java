@@ -64,6 +64,12 @@ public class RecipeRecommendationService {
             return page.map(this::toSummary);
         }
 
+        if (normalizedQ == null) {
+            return recipeRepository
+                    .findRecommendedByRequiredTagIds(requiredTagIds, requiredTagIds.size(), pageable)
+                    .map(this::toSummary);
+        }
+
         return recipeRepository
                 .findRecommendedByRequiredTagIds(requiredTagIds, requiredTagIds.size(), normalizedQ, pageable)
                 .map(this::toSummary);
