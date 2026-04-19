@@ -16,8 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -83,5 +85,20 @@ public class RecipeController implements SecuredRestController {
     @Operation(summary = "Add a new recipe", description = "Creates a new recipe. Admin role required.")
     public ResponseEntity<RecipeDetailDto> createRecipe(@RequestBody RecipeCreateRequestDto body) {
         return ResponseEntity.status(HttpStatus.CREATED).body(recipeService.createRecipe(body));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Update recipe", description = "Updates an existing recipe. Admin role required.")
+    public ResponseEntity<RecipeDetailDto> updateRecipe(@PathVariable Long id, @RequestBody RecipeCreateRequestDto body) {
+        return ResponseEntity.ok(recipeService.updateRecipe(id, body));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "Delete recipe", description = "Deletes a recipe. Admin role required.")
+    public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
+        recipeService.deleteRecipe(id);
+        return ResponseEntity.noContent().build();
     }
 }

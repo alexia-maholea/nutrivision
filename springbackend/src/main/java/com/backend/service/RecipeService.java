@@ -22,10 +22,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,29 +52,8 @@ public class RecipeService {
     }
 
     public RecipeDetailDto createRecipe(RecipeCreateRequestDto request) {
-        if (request == null) {
-            throw new BadRequestException("Request body is required");
-        }
-
-        String title = request.getTitle() == null ? null : request.getTitle().trim();
-        if (title == null || title.isEmpty()) {
-            throw new BadRequestException("title is required");
-        }
-        if (request.getCalories() != null && request.getCalories() < 0) {
-            throw new BadRequestException("calories must be >= 0");
-        }
-        if (request.getCookingTime() != null && request.getCookingTime() < 0) {
-            throw new BadRequestException("cookingTime must be >= 0");
-        }
-        if (request.getProtein() != null && request.getProtein() < 0) {
-            throw new BadRequestException("protein must be >= 0");
-        }
-        if (request.getCarbs() != null && request.getCarbs() < 0) {
-            throw new BadRequestException("carbs must be >= 0");
-        }
-        if (request.getFat() != null && request.getFat() < 0) {
-            throw new BadRequestException("fat must be >= 0");
-        }
+        validateRequest(request);
+        String title = request.getTitle().trim();
 
         Recipe recipe = new Recipe()
                 .setTitle(title)
@@ -92,6 +74,48 @@ public class RecipeService {
         return toDetail(saved);
     }
 
+    public RecipeDetailDto updateRecipe(Long id, RecipeCreateRequestDto request) {
+        validateRequest(request);
+
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+
+        recipe.setTitle(request.getTitle().trim())
+                .setDescription(request.getDescription())
+                .setCalories(request.getCalories())
+                .setProtein(request.getProtein())
+                .setCarbs(request.getCarbs())
+                .setFat(request.getFat())
+                .setCookingTime(request.getCookingTime())
+                .setDifficulty(request.getDifficulty());
+
+        if (request.getDietaryTagIds() != null) {
+            applyDietaryTags(recipe, request.getDietaryTagIds());
+        }
+
+        if (request.getIngredients() != null) {
+            applyIngredientsForUpdate(recipe, request.getIngredients());
+        }
+
+        if (request.getSteps() != null) {
+            applyStepsForUpdate(recipe, request.getSteps());
+        }
+
+        return toDetail(recipe);
+    }
+
+    public void deleteRecipe(Long id) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipe not found"));
+        try {
+            recipeRepository.delete(recipe);
+            recipeRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Recipe is used in meal plans and cannot be deleted", ex);
+        }
+    }
+
     @Transactional(readOnly = true)
     public RecipeDetailDto getRecipeById(Long id) {
         Recipe recipe = recipeRepository.findById(id)
@@ -107,6 +131,7 @@ public class RecipeService {
         Set<Long> requestedIds = dietaryTagIds.stream()
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         if (requestedIds.isEmpty()) {
+            recipe.setDietaryTags(new LinkedHashSet<>());
             return;
         }
 
@@ -122,7 +147,7 @@ public class RecipeService {
     }
 
     private void applyIngredients(Recipe recipe, List<RecipeIngredientInputDto> ingredientInputs) {
-        if (ingredientInputs == null || ingredientInputs.isEmpty()) {
+        if (ingredientInputs == null) {
             return;
         }
 
@@ -156,6 +181,53 @@ public class RecipeService {
         }
     }
 
+    private void applyIngredientsForUpdate(Recipe recipe, List<RecipeIngredientInputDto> ingredientInputs) {
+        Map<Long, RecipeIngredient> existingByIngredientId = recipe.getRecipeIngredients().stream()
+                .filter(ri -> ri.getIngredient() != null && ri.getIngredient().getId() != null)
+                .collect(Collectors.toMap(
+                        ri -> ri.getIngredient().getId(),
+                        ri -> ri,
+                        (left, right) -> left));
+
+        List<RecipeIngredient> updatedIngredients = new ArrayList<>();
+        Set<Long> usedIngredientIds = new LinkedHashSet<>();
+
+        for (int i = 0; i < ingredientInputs.size(); i++) {
+            RecipeIngredientInputDto input = ingredientInputs.get(i);
+            int row = i + 1;
+            if (input == null) {
+                throw new BadRequestException("ingredients[" + row + "] is required");
+            }
+            if (input.getQuantity() == null || input.getQuantity() <= 0) {
+                throw new BadRequestException("ingredients[" + row + "].quantity must be > 0");
+            }
+
+            String unit = input.getUnit() == null ? null : input.getUnit().trim();
+            if (unit == null || unit.isEmpty()) {
+                throw new BadRequestException("ingredients[" + row + "].unit is required");
+            }
+
+            Ingredient ingredient = resolveIngredient(input, row);
+            if (!usedIngredientIds.add(ingredient.getId())) {
+                throw new BadRequestException("Duplicate ingredient in request: " + ingredient.getId());
+            }
+
+            RecipeIngredient recipeIngredient = existingByIngredientId.get(ingredient.getId());
+            if (recipeIngredient == null) {
+                recipeIngredient = new RecipeIngredient()
+                        .setRecipe(recipe)
+                        .setIngredient(ingredient);
+            }
+
+            recipeIngredient.setQuantity(input.getQuantity())
+                    .setUnit(unit);
+            updatedIngredients.add(recipeIngredient);
+        }
+
+        recipe.getRecipeIngredients().clear();
+        recipe.getRecipeIngredients().addAll(updatedIngredients);
+    }
+
     private Ingredient resolveIngredient(RecipeIngredientInputDto input, int row) {
         if (input.getIngredientId() != null) {
             return ingredientRepository.findById(input.getIngredientId())
@@ -177,7 +249,7 @@ public class RecipeService {
     }
 
     private void applySteps(Recipe recipe, List<RecipeStepInputDto> stepInputs) {
-        if (stepInputs == null || stepInputs.isEmpty()) {
+        if (stepInputs == null) {
             return;
         }
 
@@ -212,6 +284,53 @@ public class RecipeService {
                     .setDurationMinutes(input.getDurationMinutes());
             recipe.getSteps().add(step);
         }
+    }
+
+    private void applyStepsForUpdate(Recipe recipe, List<RecipeStepInputDto> stepInputs) {
+        Map<Integer, RecipeStep> existingByStepNo = recipe.getSteps().stream()
+                .filter(step -> step.getStepNo() != null)
+                .collect(Collectors.toMap(RecipeStep::getStepNo, step -> step, (left, right) -> left));
+
+        List<RecipeStep> updatedSteps = new ArrayList<>();
+        Set<Integer> usedStepNos = new LinkedHashSet<>();
+
+        for (int i = 0; i < stepInputs.size(); i++) {
+            RecipeStepInputDto input = stepInputs.get(i);
+            int row = i + 1;
+            if (input == null) {
+                throw new BadRequestException("steps[" + row + "] is required");
+            }
+
+            Integer stepNo = input.getStepNo() != null ? input.getStepNo() : row;
+            if (stepNo <= 0) {
+                throw new BadRequestException("steps[" + row + "].stepNo must be > 0");
+            }
+            if (!usedStepNos.add(stepNo)) {
+                throw new BadRequestException("Duplicate stepNo in request: " + stepNo);
+            }
+
+            String description = input.getDescription() == null ? null : input.getDescription().trim();
+            if (description == null || description.isEmpty()) {
+                throw new BadRequestException("steps[" + row + "].description is required");
+            }
+            if (input.getDurationMinutes() != null && input.getDurationMinutes() < 0) {
+                throw new BadRequestException("steps[" + row + "].durationMinutes must be >= 0");
+            }
+
+            RecipeStep step = existingByStepNo.get(stepNo);
+            if (step == null) {
+                step = new RecipeStep()
+                        .setRecipe(recipe)
+                        .setStepNo(stepNo);
+            }
+
+            step.setDescription(description)
+                    .setDurationMinutes(input.getDurationMinutes());
+            updatedSteps.add(step);
+        }
+
+        recipe.getSteps().clear();
+        recipe.getSteps().addAll(updatedSteps);
     }
 
     private RecipeDetailDto toDetail(Recipe saved) {
@@ -250,6 +369,32 @@ public class RecipeService {
                 .collect(Collectors.toList()));
 
         return detail;
+    }
+
+    private void validateRequest(RecipeCreateRequestDto request) {
+        if (request == null) {
+            throw new BadRequestException("Request body is required");
+        }
+
+        String title = request.getTitle() == null ? null : request.getTitle().trim();
+        if (title == null || title.isEmpty()) {
+            throw new BadRequestException("title is required");
+        }
+        if (request.getCalories() != null && request.getCalories() < 0) {
+            throw new BadRequestException("calories must be >= 0");
+        }
+        if (request.getCookingTime() != null && request.getCookingTime() < 0) {
+            throw new BadRequestException("cookingTime must be >= 0");
+        }
+        if (request.getProtein() != null && request.getProtein() < 0) {
+            throw new BadRequestException("protein must be >= 0");
+        }
+        if (request.getCarbs() != null && request.getCarbs() < 0) {
+            throw new BadRequestException("carbs must be >= 0");
+        }
+        if (request.getFat() != null && request.getFat() < 0) {
+            throw new BadRequestException("fat must be >= 0");
+        }
     }
 }
 
