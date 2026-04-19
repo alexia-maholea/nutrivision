@@ -1,6 +1,5 @@
 SET search_path TO project;
 
--- Seed 10 recipes (idempotent by title)
 INSERT INTO recipe (title, description, calories, protein, carbs, fat, cooking_time, difficulty)
 SELECT v.title,
        v.description,

@@ -1,7 +1,3 @@
--- Dacă V2 nu s-a aplicat (ex. FK bigint vs coloane integer dintr-o bază veche), creează tabela
--- cu tipuri care se potrivesc exact cu project.profile(id) și project.dietary_tag(id).
--- Dacă tabela există deja (V2 OK), nu face nimic.
-
 CREATE SCHEMA IF NOT EXISTS project;
 
 DO $$

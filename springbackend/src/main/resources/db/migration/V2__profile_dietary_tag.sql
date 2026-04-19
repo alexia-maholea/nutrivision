@@ -1,6 +1,3 @@
--- Baze vechi: V1 rulat înainte să existe tabela M–M profile ↔ dietary_tag.
--- Idempotent: pe o instalare nouă cu V1 complet, CREATE IF NOT EXISTS nu face nimic.
-
 CREATE SCHEMA IF NOT EXISTS project;
 
 SET search_path TO project;

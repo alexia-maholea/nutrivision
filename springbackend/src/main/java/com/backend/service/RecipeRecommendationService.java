@@ -24,10 +24,6 @@ public class RecipeRecommendationService {
         this.recipeRepository = recipeRepository;
     }
 
-    /**
-     * Rețetele care respectă toate restricțiile din profil (tag-urile userului trebuie să apară pe rețetă).
-     * Dacă userul nu are restricții, se întorc toate rețetele.
-     */
     public List<RecipeSummaryDto> allRecipes() {
         return recipeRepository.findAllByOrderByTitleAsc().stream().map(this::toSummary).collect(Collectors.toList());
     }

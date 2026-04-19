@@ -187,9 +187,6 @@ public class ProfileService {
         return getCurrentUserProfile();
     }
 
-    /**
-     * Conturi vechi fără rând în {@code profile}: îl creăm (relație 1–1 cu User).
-     */
     protected Profile createProfileForUser(User user) {
         Profile profile = new Profile();
         profile.setUser(user);

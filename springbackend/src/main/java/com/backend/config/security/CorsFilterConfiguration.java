@@ -22,9 +22,7 @@ public class CorsFilterConfiguration implements WebMvcConfigurer {
                 .allowCredentials(true);
     }
 
-    /**
-     * Folosit de Spring Security ({@code http.cors}) ca preflight OPTIONS să nu primească 403.
-     */
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

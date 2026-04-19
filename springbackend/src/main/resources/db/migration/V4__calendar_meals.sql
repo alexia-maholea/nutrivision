@@ -1,6 +1,5 @@
 SET search_path TO project;
 
--- Câte mese vrea userul pe zi (calendar)
 ALTER TABLE profile
     ADD COLUMN IF NOT EXISTS meals_per_day INTEGER DEFAULT 3;
 
@@ -28,7 +27,6 @@ WHERE meal_slot_index IS NULL;
 ALTER TABLE meal_plan_entry
     ALTER COLUMN meal_slot_index SET NOT NULL;
 
--- Elimină duplicate (același plan + zi + slot), păstrează intrarea cu id minim
 DELETE FROM meal_plan_entry a
     USING meal_plan_entry b
 WHERE a.meal_plan_id = b.meal_plan_id
