@@ -42,6 +42,7 @@ public class SecurityConfiguration {
                             "/api/v1/ping",
                             "/api/v1/auth/login", "/api/v1/auth/register",
                             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
                     .anyRequest().authenticated())
                     .exceptionHandling(exception -> exception.authenticationEntryPoint(authEntryPoint))
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
