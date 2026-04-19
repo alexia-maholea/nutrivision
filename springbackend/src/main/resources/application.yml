@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: project
   datasource:
@@ -22,6 +24,17 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  mail:
+    host: ${MAILTRAP_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAILTRAP_PORT:2525}
+    username: ${MAILTRAP_USERNAME:}
+    password: ${MAILTRAP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 vars:
   security:
@@ -34,10 +47,18 @@ token:
   ttl: 3600000
   secret: "https://www.youtube.com/watch?v=VBUMYOYJISc"
 
+mail:
+  from: ${MAIL_FROM:no-reply@nutrivision.local}
+
 admin:
   username: admin
   email: admin@admin.com
   password: admin
+
+logging:
+  level:
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+    org.springframework.security: INFO
 
 
 
