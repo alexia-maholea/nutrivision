@@ -34,9 +34,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
             JOIN f.user u
             WHERE f.category = 'GENERAL'
               AND (:q IS NULL
-                OR LOWER(COALESCE(f.message, '')) LIKE LOWER(CONCAT('%', :q, '%'))
-                OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
-                OR LOWER(u.name) LIKE LOWER(CONCAT('%', :q, '%')))
+                OR COALESCE(f.message, '') ILIKE CONCAT('%', CAST(:q AS text), '%')
+                OR u.email ILIKE CONCAT('%', CAST(:q AS text), '%')
+                OR u.name ILIKE CONCAT('%', CAST(:q AS text), '%'))
             """,
             countQuery = """
             SELECT COUNT(f)
@@ -44,9 +44,9 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
             JOIN f.user u
             WHERE f.category = 'GENERAL'
               AND (:q IS NULL
-                OR LOWER(COALESCE(f.message, '')) LIKE LOWER(CONCAT('%', :q, '%'))
-                OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
-                OR LOWER(u.name) LIKE LOWER(CONCAT('%', :q, '%')))
+                OR COALESCE(f.message, '') ILIKE CONCAT('%', CAST(:q AS text), '%')
+                OR u.email ILIKE CONCAT('%', CAST(:q AS text), '%')
+                OR u.name ILIKE CONCAT('%', CAST(:q AS text), '%'))
             """)
     Page<Feedback> searchGeneralFeedback(@Param("q") String q, Pageable pageable);
 }

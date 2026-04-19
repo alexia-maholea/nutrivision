@@ -8,9 +8,12 @@ import com.backend.repository.DietaryTagRepository;
 import com.backend.repository.ProfileRepository;
 import com.backend.repository.UserRepository;
 import com.backend.service.dto.DietaryTagDto;
+import com.backend.service.dto.MeResponseDto;
 import com.backend.service.dto.MealsPerDayRequestDto;
 import com.backend.service.dto.ProfileResponseDto;
 import com.backend.service.dto.ProfileUpdateRequestDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -50,10 +53,28 @@ public class ProfileService {
         return mapProfile(profile);
     }
 
+    @Transactional(readOnly = true)
+    public MeResponseDto getCurrentUserIdentity() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findUserByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        return new MeResponseDto()
+                .setEmail(user.getEmail())
+                .setName(user.getName())
+                .setRole(user.getRole().name());
+    }
+
     public List<ProfileResponseDto> getAllProfilesForAdmin() {
         return profileRepository.findAllForAdminListing().stream()
                 .map(this::mapProfile)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProfileResponseDto> getProfilesForAdmin(String q, Pageable pageable) {
+        return profileRepository.searchForAdminListing(normalizeQuery(q), pageable)
+                .map(this::mapProfile);
     }
 
     private ProfileResponseDto mapProfile(Profile profile) {
@@ -61,6 +82,7 @@ public class ProfileService {
         ProfileResponseDto dto = new ProfileResponseDto()
                 .setEmail(profile.getUser().getEmail())
                 .setName(profile.getUser().getName())
+                .setRole(profile.getUser().getRole().name())
                 .setAge(profile.getAge())
                 .setHeight(profile.getHeight())
                 .setWeight(profile.getWeight())
@@ -177,5 +199,13 @@ public class ProfileService {
         return new DietaryTagDto()
                 .setId(tag.getId())
                 .setName(tag.getName());
+    }
+
+    private String normalizeQuery(String q) {
+        if (q == null) {
+            return null;
+        }
+        String trimmed = q.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

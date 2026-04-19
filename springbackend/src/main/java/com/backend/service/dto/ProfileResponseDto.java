@@ -14,6 +14,7 @@ public class ProfileResponseDto {
 
     private String email;
     private String name;
+    private String role;
 
     private Integer age;
     private Double height;
@@ -43,6 +44,15 @@ public class ProfileResponseDto {
 
     public ProfileResponseDto setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public ProfileResponseDto setRole(String role) {
+        this.role = role;
         return this;
     }
 
