@@ -1,5 +1,10 @@
+import { useState } from 'react'
 import heroImg from './assets/hero.png'
+import Profile from './Profile'
+import Auth from './Auth'
 import './App.css'
+
+type Page = 'home' | 'profile' | 'auth'
 
 const stats = [
   { value: '1.000+', label: 'Rețete Generate' },
@@ -80,11 +85,21 @@ function FlameIcon() {
 }
 
 function App() {
+  const [page, setPage] = useState<Page>('home')
+
+  const nav = (p: Page) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    setPage(p)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  if (page === 'auth') return <Auth onClose={() => setPage('home')} />
+
   return (
     <div className="page-shell">
       <header className="site-header">
         <div className="container header-inner">
-          <a className="brand" href="#home" aria-label="NutriVision acasă">
+          <a className="brand" href="#" onClick={nav('home')} aria-label="NutriVision acasă">
             <span className="brand-mark">
               <LeafIcon />
             </span>
@@ -92,14 +107,15 @@ function App() {
           </a>
 
           <nav className="site-nav" aria-label="Navigație principală">
-            <a href="#home" className="nav-active">Acasă</a>
-            <a href="#features">Profil</a>
-            <a href="#stats">Rețete</a>
+            <a href="#" onClick={nav('home')} className={page === 'home' ? 'nav-active' : ''}>Acasă</a>
+            <a href="#" onClick={nav('profile')} className={page === 'profile' ? 'nav-active' : ''}>Profil</a>
+            <a href="#">Rețete</a>
+            <a href="#" onClick={nav('auth')} className="nav-login">Conectează-te</a>
           </nav>
         </div>
       </header>
 
-      <main>
+      {page === 'profile' ? <Profile /> : <main>
         <section id="home" className="hero-section">
           <div className="container hero-grid">
             <div className="hero-copy">
@@ -298,7 +314,7 @@ function App() {
             </div>
           </div>
         </section>
-      </main>
+      </main>}
     </div>
   )
 }

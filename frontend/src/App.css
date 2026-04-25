@@ -77,6 +77,18 @@
   font-weight: 600;
 }
 
+.site-nav a.nav-login {
+  background: #22c55e;
+  color: #fff;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
+.site-nav a.nav-login:hover {
+  background: #16a34a;
+  color: #fff;
+}
+
 /* ── Hero ── */
 .hero-section {
   padding: 4.5rem 0 3rem;
