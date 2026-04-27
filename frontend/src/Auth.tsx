@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { authService } from './services/authService'
+import { userService } from './services/userService'
 import './Auth.css'
 
 type Mode = 'login' | 'register'
@@ -67,6 +68,17 @@ export default function Auth({
       }
       const res = await authService.login(email, password)
       localStorage.setItem('token', res.access_token)
+
+      // Fetch and cache user role
+      try {
+        const user = await userService.getCurrentUser()
+        console.log('[Auth] User fetched:', user)
+        localStorage.setItem('userRole', user.role)
+        console.log('[Auth] Stored role:', user.role)
+      } catch (err) {
+        console.error('[Auth] Failed to fetch user:', err)
+      }
+
       onAuthSuccess(res.access_token)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'A apărut o eroare. Încearcă din nou.')

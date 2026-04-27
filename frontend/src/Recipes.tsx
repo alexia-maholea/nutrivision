@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { recipeService } from './services/recipeService'
 import type { RecipeSummary, RecipeDetail } from './services/recipeService'
+import { AdminRecipeForm, DeleteConfirmDialog } from './AdminRecipeModals'
 import './Recipes.css'
 
-const PAGE_SIZE = 9
 type Tab = 'all' | 'my'
 
 const DIFF_LABEL: Record<string, string> = { EASY: 'Ușor', MEDIUM: 'Mediu', HARD: 'Dificil' }
@@ -63,12 +63,41 @@ function SkeletonCard() {
 }
 
 /* ── Recipe card ── */
-function RecipeCard({ recipe, onClick }: { recipe: RecipeSummary; onClick: () => void }) {
+function RecipeCard({ recipe, onClick, onDelete, isAdmin }: {
+  recipe: RecipeSummary
+  onClick: () => void
+  onDelete?: (id: number) => void
+  isAdmin?: boolean
+}) {
   return (
     <article className="recipe-card" onClick={onClick} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onClick()}>
       <div className="recipe-card-top">
         {recipe.difficulty && (
           <span className={`recipe-diff ${DIFF_CLASS[recipe.difficulty]}`}>{DIFF_LABEL[recipe.difficulty]}</span>
+        )}
+        {isAdmin && (
+          <div className="recipe-card-admin">
+            <button
+              className="admin-btn admin-edit"
+              onClick={e => {
+                e.stopPropagation()
+                onClick()
+              }}
+              title="Editează"
+            >
+              ✏️
+            </button>
+            <button
+              className="admin-btn admin-delete"
+              onClick={e => {
+                e.stopPropagation()
+                onDelete?.(recipe.id)
+              }}
+              title="Șterge"
+            >
+              🗑️
+            </button>
+          </div>
         )}
       </div>
       <h3 className="recipe-title">{recipe.title}</h3>
@@ -104,17 +133,25 @@ function MacroCard({ label, value, unit }: { label: string; value: number | null
 }
 
 /* ── Detail modal content ── */
-function RecipeDetailView({ detail }: { detail: RecipeDetail }) {
+function RecipeDetailView({ detail, isAdmin, onEdit, onDelete }: { detail: RecipeDetail; isAdmin?: boolean; onEdit?: (recipe: RecipeDetail) => void; onDelete?: (id: number) => void }) {
   return (
     <div className="modal-content">
       <div className="modal-header">
-        <div className="modal-badges">
-          {detail.difficulty && (
-            <span className={`recipe-diff ${DIFF_CLASS[detail.difficulty]}`}>{DIFF_LABEL[detail.difficulty]}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <div className="modal-badges">
+            {detail.difficulty && (
+              <span className={`recipe-diff ${DIFF_CLASS[detail.difficulty]}`}>{DIFF_LABEL[detail.difficulty]}</span>
+            )}
+            {detail.dietaryTags.map(t => (
+              <span key={t.id} className="modal-tag">{TAG_LABEL[t.name] ?? t.name}</span>
+            ))}
+          </div>
+          {isAdmin && (
+            <div className="detail-admin-btns">
+              <button className="detail-btn edit" onClick={() => onEdit?.(detail)} title="Editează">✏️</button>
+              <button className="detail-btn delete" onClick={() => onDelete?.(detail.id)} title="Șterge">🗑️</button>
+            </div>
           )}
-          {detail.dietaryTags.map(t => (
-            <span key={t.id} className="modal-tag">{TAG_LABEL[t.name] ?? t.name}</span>
-          ))}
         </div>
         <h2>{detail.title}</h2>
         {detail.description && <p className="modal-desc">{detail.description}</p>}
@@ -177,6 +214,8 @@ export default function Recipes({
   onRequireAuth: () => void
 }) {
   const [tab, setTab] = useState<Tab>('all')
+  const [view, setView] = useState<'grid' | 'table'>('grid')
+  const [pageSize, setPageSize] = useState(9)
   const [page, setPage] = useState(0)
   const [searchInput, setSearchInput] = useState('')
   const [query, setQuery] = useState('')
@@ -188,6 +227,23 @@ export default function Recipes({
   const [detail, setDetail] = useState<RecipeDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
+  // Admin features
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null)
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fat: '',
+    cooking_time: '',
+    difficulty: 'EASY',
+  })
+  const [formLoading, setFormLoading] = useState(false)
+
   /* Debounce search input */
   useEffect(() => {
     const id = setTimeout(() => {
@@ -197,14 +253,24 @@ export default function Recipes({
     return () => clearTimeout(id)
   }, [searchInput])
 
+  /* Check if admin */
+  useEffect(() => {
+    if (!token) return
+    // Try to get from localStorage (cached from profile fetch)
+    const cached = localStorage.getItem('userRole')
+    if (cached) {
+      setIsAdmin(cached === 'ADMIN')
+    }
+  }, [token])
+
   /* Fetch recipe list */
   useEffect(() => {
     if (!token) return
     setLoading(true)
     setError('')
     const fetcher = tab === 'all'
-      ? recipeService.all(page, PAGE_SIZE, query || undefined)
-      : recipeService.my(page, PAGE_SIZE, query || undefined)
+      ? recipeService.all(page, pageSize, query || undefined)
+      : recipeService.my(page, pageSize, query || undefined)
     fetcher
       .then(data => {
         setRecipes(data.items)
@@ -225,7 +291,7 @@ export default function Recipes({
         }
       })
       .finally(() => setLoading(false))
-  }, [tab, page, query, token, onRequireAuth])
+  }, [tab, page, query, token, pageSize, onRequireAuth])
 
   /* Fetch recipe detail */
   useEffect(() => {
@@ -255,6 +321,87 @@ export default function Recipes({
     setTab(t)
     setPage(0)
     setSearchInput('')
+  }
+
+  function openAddModal() {
+    setFormData({ title: '', description: '', calories: '', protein: '', carbs: '', fat: '', cooking_time: '', difficulty: 'EASY' })
+    setEditingId(null)
+    setShowAddModal(true)
+  }
+
+  function openEditModal(recipe: RecipeDetail) {
+    setFormData({
+      title: recipe.title,
+      description: recipe.description || '',
+      calories: recipe.calories ? String(recipe.calories) : '',
+      protein: recipe.protein ? String(recipe.protein) : '',
+      carbs: recipe.carbs ? String(recipe.carbs) : '',
+      fat: recipe.fat ? String(recipe.fat) : '',
+      cooking_time: recipe.cookingTime ? String(recipe.cookingTime) : '',
+      difficulty: recipe.difficulty || 'EASY',
+    })
+    setEditingId(recipe.id)
+    setShowAddModal(true)
+  }
+
+  async function handleSaveRecipe() {
+    if (!formData.title.trim()) {
+      alert('Titlul rețetei este obligatoriu')
+      return
+    }
+    setFormLoading(true)
+    try {
+      const payload = {
+        title: formData.title,
+        description: formData.description || undefined,
+        calories: formData.calories ? Number(formData.calories) : undefined,
+        protein: formData.protein ? Number(formData.protein) : undefined,
+        carbs: formData.carbs ? Number(formData.carbs) : undefined,
+        fat: formData.fat ? Number(formData.fat) : undefined,
+        cooking_time: formData.cooking_time ? Number(formData.cooking_time) : undefined,
+        difficulty: formData.difficulty || undefined,
+      }
+      console.log('[Recipes] Saving recipe:', { editingId, payload })
+      console.log('[Recipes] formData:', formData)
+      console.log('[Recipes] JSON payload:', JSON.stringify(payload, null, 2))
+
+      if (editingId) {
+        console.log('[Recipes] Calling update for id:', editingId)
+        await recipeService.update(editingId, payload)
+        console.log('[Recipes] Update completed')
+      } else {
+        console.log('[Recipes] Calling create')
+        await recipeService.create(payload)
+        console.log('[Recipes] Create completed')
+      }
+
+      console.log('[Recipes] Recipe saved successfully')
+      setShowAddModal(false)
+      setEditingId(null)
+      setPage(0)
+      setQuery('')
+      setSearchInput('')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Nu s-a putut salva rețeta'
+      console.error('[Recipes] Save error:', msg, err)
+      alert(`Eroare: ${msg}`)
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  async function handleDeleteRecipe(id: number) {
+    setFormLoading(true)
+    try {
+      await recipeService.delete(id)
+      setShowDeleteConfirm(null)
+      setSelectedId(null)
+      setPage(0)
+    } catch (err) {
+      alert(`Eroare: ${err instanceof Error ? err.message : 'Nu s-a putut șterge rețeta'}`)
+    } finally {
+      setFormLoading(false)
+    }
   }
 
   /* Not logged in */
@@ -310,6 +457,47 @@ export default function Recipes({
               <button className="search-clear" onClick={() => setSearchInput('')} aria-label="Șterge căutarea">×</button>
             )}
           </div>
+
+          <div className="recipes-view-toggle">
+            <button
+              className={view === 'grid' ? 'active' : ''}
+              onClick={() => setView('grid')}
+              title="Vizualizare grilă"
+              aria-label="Grilă"
+            >
+              ⊞
+            </button>
+            <button
+              className={view === 'table' ? 'active' : ''}
+              onClick={() => setView('table')}
+              title="Vizualizare tabel"
+              aria-label="Tabel"
+            >
+              ≡
+            </button>
+          </div>
+
+          <div className="recipes-page-size">
+            <label htmlFor="page-size">Pe pagină:</label>
+            <input
+              id="page-size"
+              type="number"
+              min="1"
+              max="100"
+              value={pageSize}
+              onChange={e => {
+                const val = Math.max(1, Math.min(100, Number(e.target.value)))
+                setPageSize(val)
+                setPage(0)
+              }}
+            />
+          </div>
+
+          {isAdmin && (
+            <button className="btn-add-recipe" onClick={() => openAddModal()}>
+              + Adauga rețetă
+            </button>
+          )}
         </div>
 
         {/* Result count */}
@@ -322,10 +510,10 @@ export default function Recipes({
           </p>
         )}
 
-        {/* Grid */}
+        {/* Grid or Table */}
         {loading ? (
           <div className="recipes-grid">
-            {Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCard key={i} />)}
+            {Array.from({ length: pageSize }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : error ? (
           <div className="recipes-error-wrap">
@@ -340,11 +528,59 @@ export default function Recipes({
                 : 'Nicio rețetă nu corespunde căutării tale.'}
             </p>
           </div>
-        ) : (
+        ) : view === 'grid' ? (
           <div className="recipes-grid">
             {recipes.map(r => (
-              <RecipeCard key={r.id} recipe={r} onClick={() => setSelectedId(r.id)} />
+              <RecipeCard
+                key={r.id}
+                recipe={r}
+                onClick={() => setSelectedId(r.id)}
+                isAdmin={isAdmin}
+                onDelete={id => setShowDeleteConfirm(id)}
+              />
             ))}
+          </div>
+        ) : (
+          <div className="recipes-table-wrapper">
+            <table className="recipes-table">
+              <thead>
+                <tr>
+                  <th>Rețetă</th>
+                  <th>Timp</th>
+                  <th>Calorii</th>
+                  <th>Dificultate</th>
+                  {isAdmin && <th>Acțiuni</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {recipes.map(r => (
+                  <tr key={r.id} className="table-row">
+                    <td className="col-title" onClick={() => setSelectedId(r.id)} style={{ cursor: 'pointer' }}>
+                      {r.title}
+                    </td>
+                    <td className="col-time">{r.cookingTime} min</td>
+                    <td className="col-calories">{r.calories} kcal</td>
+                    <td className="col-difficulty">
+                      {r.difficulty && (
+                        <span className={`recipe-diff ${DIFF_CLASS[r.difficulty]}`}>
+                          {DIFF_LABEL[r.difficulty]}
+                        </span>
+                      )}
+                    </td>
+                    {isAdmin && (
+                      <td className="col-actions">
+                        <button className="table-action edit" onClick={() => setSelectedId(r.id)} title="Editează">
+                          ✏️
+                        </button>
+                        <button className="table-action delete" onClick={() => setShowDeleteConfirm(r.id)} title="Șterge">
+                          🗑️
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
@@ -397,11 +633,39 @@ export default function Recipes({
                 <span>Se încarcă rețeta…</span>
               </div>
             ) : (
-              <RecipeDetailView detail={detail} />
+              <RecipeDetailView
+                detail={detail}
+                isAdmin={isAdmin}
+                onEdit={recipe => {
+                  openEditModal(recipe)
+                  setSelectedId(null)
+                }}
+                onDelete={id => {
+                  setShowDeleteConfirm(id)
+                  setSelectedId(null)
+                }}
+              />
             )}
           </div>
         </div>
       )}
+
+      {/* Admin Modals */}
+      <AdminRecipeForm
+        isOpen={showAddModal}
+        isLoading={formLoading}
+        formData={formData}
+        setFormData={setFormData}
+        onSave={handleSaveRecipe}
+        onClose={() => setShowAddModal(false)}
+      />
+
+      <DeleteConfirmDialog
+        isOpen={showDeleteConfirm !== null}
+        isLoading={formLoading}
+        onConfirm={() => showDeleteConfirm !== null && handleDeleteRecipe(showDeleteConfirm)}
+        onCancel={() => setShowDeleteConfirm(null)}
+      />
     </div>
   )
 }

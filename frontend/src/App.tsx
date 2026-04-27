@@ -3,9 +3,11 @@ import heroImg from './assets/hero.png'
 import Profile from './Profile'
 import Auth from './Auth'
 import Recipes from './Recipes'
+import Users from './Users'
+import Feedback from './Feedback'
 import './App.css'
 
-type Page = 'home' | 'profile' | 'auth' | 'recipes'
+type Page = 'home' | 'profile' | 'auth' | 'recipes' | 'users' | 'feedback'
 
 const stats = [
   { value: '1.000+', label: 'Rețete Generate' },
@@ -90,7 +92,7 @@ function App() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
 
   function goTo(p: Page) {
-    if ((p === 'profile' || p === 'recipes') && !token) {
+    if ((p === 'profile' || p === 'recipes' || p === 'users' || p === 'feedback') && !token) {
       setPage('auth')
     } else {
       setPage(p)
@@ -138,6 +140,12 @@ function App() {
             <a href="#" onClick={nav('home')} className={page === 'home' ? 'nav-active' : ''}>Acasă</a>
             <a href="#" onClick={nav('profile')} className={page === 'profile' ? 'nav-active' : ''}>Profil</a>
             <a href="#" onClick={nav('recipes')} className={page === 'recipes' ? 'nav-active' : ''}>Rețete</a>
+            {token && (
+              <>
+                <a href="#" onClick={nav('users')} className={page === 'users' ? 'nav-active' : ''}>Utilizatori</a>
+                <a href="#" onClick={nav('feedback')} className={page === 'feedback' ? 'nav-active' : ''}>Feedback</a>
+              </>
+            )}
             {token ? (
               <button className="nav-login nav-logout" onClick={handleLogout}>
                 Deconectează-te
@@ -153,6 +161,10 @@ function App() {
         <Profile onRequireAuth={() => setPage('auth')} />
       ) : page === 'recipes' ? (
         <Recipes token={token} onRequireAuth={() => setPage('auth')} />
+      ) : page === 'users' ? (
+        <Users token={token} onRequireAuth={() => setPage('auth')} />
+      ) : page === 'feedback' ? (
+        <Feedback token={token} onRequireAuth={() => setPage('auth')} />
       ) : (
         <main>
           <section id="home" className="hero-section">

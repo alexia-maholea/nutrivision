@@ -662,3 +662,378 @@
   margin-top: 3px;
   margin-left: 0.5rem;
 }
+
+/* ── View Toggle ── */
+.recipes-view-toggle {
+  display: flex;
+  background: #e4e6e1;
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.recipes-view-toggle button {
+  background: none;
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font-size: 1rem;
+  color: #52525b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-weight: 600;
+}
+
+.recipes-view-toggle button.active {
+  background: #fff;
+  color: #16a34a;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.recipes-view-toggle button.active {
+  background: #fff;
+  color: #16a34a;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* ── Page Size Selector ── */
+.recipes-page-size {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.recipes-page-size label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #52525b;
+  white-space: nowrap;
+}
+
+.recipes-page-size input {
+  background: #fff;
+  border: 1.5px solid #e4e6e1;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0a140e;
+  width: 60px;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  text-align: center;
+}
+
+.recipes-page-size input:hover,
+.recipes-page-size input:focus {
+  border-color: #16a34a;
+  outline: none;
+}
+
+/* Hide number input spinners */
+.recipes-page-size input::-webkit-outer-spin-button,
+.recipes-page-size input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.recipes-page-size input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* ── Table View ── */
+.recipes-table-wrapper {
+  background: #fff;
+  border-radius: 1.125rem;
+  border: 1px solid rgba(0,0,0,0.07);
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+}
+
+.recipes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.recipes-table thead {
+  background: #f8faf8;
+  border-bottom: 1.5px solid #e4e6e1;
+}
+
+.recipes-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: #0a140e;
+  letter-spacing: 0.02em;
+}
+
+.recipes-table th:nth-child(1) { width: 50%; }
+.recipes-table th:nth-child(2) { width: 15%; text-align: center; }
+.recipes-table th:nth-child(3) { width: 15%; text-align: center; }
+.recipes-table th:nth-child(4) { width: 20%; text-align: center; }
+
+.recipes-table tbody tr {
+  border-bottom: 1px solid #f4f4f5;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.recipes-table tbody tr:hover {
+  background: #f8faf8;
+}
+
+.recipes-table td {
+  padding: 0.9rem 1rem;
+  color: #52525b;
+}
+
+.recipes-table .col-title {
+  color: #0a140e;
+  font-weight: 600;
+  text-align: left;
+}
+
+.recipes-table .col-time {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.recipes-table .col-calories {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.recipes-table .col-difficulty {
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .recipes-table {
+    font-size: 0.8rem;
+  }
+
+  .recipes-table th,
+  .recipes-table td {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .recipes-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .recipes-search {
+    order: 3;
+  }
+
+  .recipes-view-toggle {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .recipes-page-size {
+    order: 1;
+    align-self: flex-start;
+  }
+}
+
+/* ── Admin Buttons ── */
+.btn-add-recipe {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-add-recipe:hover {
+  background: #16a34a;
+}
+
+/* Recipe card admin buttons */
+.recipe-card-admin {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.admin-btn {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.admin-btn:hover {
+  opacity: 1;
+}
+
+/* Table actions */
+.col-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.table-action {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.table-action:hover {
+  opacity: 1;
+}
+
+/* Detail view admin buttons */
+.detail-admin-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.detail-btn {
+  background: #f4f4f5;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.detail-btn:hover {
+  background: #e4e6e1;
+}
+
+.detail-btn.delete {
+  background: #fef2f2;
+}
+
+.detail-btn.delete:hover {
+  background: #fee2e2;
+}
+
+/* ── Form Styles ── */
+.modal-content .form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.modal-content label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0a140e;
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="number"],
+.modal-content textarea,
+.modal-content select {
+  background: #fff;
+  border: 1.5px solid #e4e6e1;
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #0a140e;
+  transition: border-color 0.15s;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+  outline: none;
+  border-color: #16a34a;
+}
+
+.modal-content textarea {
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e4e6e1;
+}
+
+.btn-cancel,
+.btn-save,
+.btn-delete {
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.btn-cancel {
+  background: #f4f4f5;
+  color: #52525b;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #e4e6e1;
+}
+
+.btn-save {
+  background: #22c55e;
+  color: #fff;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.btn-delete {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-confirm {
+  max-width: 400px;
+}
+
+.delete-confirm .form-actions {
+  justify-content: space-between;
+}
+

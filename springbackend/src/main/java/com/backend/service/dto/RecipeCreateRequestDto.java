@@ -1,6 +1,7 @@
 package com.backend.service.dto;
 
 import com.backend.entity.enums.RecipeDifficulty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ public class RecipeCreateRequestDto {
     private Double protein;
     private Double carbs;
     private Double fat;
+    @JsonProperty("cooking_time")
     private Integer cookingTime;
     private RecipeDifficulty difficulty;
     private List<Long> dietaryTagIds;

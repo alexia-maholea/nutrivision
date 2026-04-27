@@ -64,4 +64,29 @@ export const recipeService = {
 
   getById: (id: number) =>
     api.get<RecipeDetail>(`/recipes/${id}`),
+
+  create: (data: {
+    title: string
+    description?: string
+    calories?: number
+    protein?: number
+    carbs?: number
+    fat?: number
+    cooking_time?: number
+    difficulty?: string
+  }) => api.post<RecipeDetail>('/recipes', data),
+
+  update: (id: number, data: {
+    title: string
+    description?: string
+    calories?: number
+    protein?: number
+    carbs?: number
+    fat?: number
+    cooking_time?: number
+    difficulty?: string
+  }) => api.put<RecipeDetail>(`/recipes/${id}`, data),
+
+  delete: (id: number) =>
+    api.delete<void>(`/recipes/${id}`),
 }
