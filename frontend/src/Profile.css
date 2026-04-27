@@ -133,6 +133,29 @@
   font-size: 0.76rem;
 }
 
+/* Feedback messages */
+.profile-error,
+.profile-success {
+  margin: 0 auto;
+  max-width: 480px;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.profile-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.profile-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+}
+
 /* CTA */
 .profile-cta {
   display: flex;

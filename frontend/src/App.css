@@ -89,6 +89,24 @@
   color: #fff;
 }
 
+button.nav-logout {
+  background: #22c55e;
+  color: #fff;
+  font-weight: 700;
+  font-size: inherit;
+  font-family: inherit;
+  margin-left: 0.25rem;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+button.nav-logout:hover {
+  background: #16a34a;
+}
+
 /* ── Hero ── */
 .hero-section {
   padding: 4.5rem 0 3rem;

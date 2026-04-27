@@ -1,4 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import {
+  profileService,
+  GOAL_TO_BACKEND,
+  BACKEND_TO_GOAL,
+  RESTRICTION_TO_TAG_ID,
+  TAG_NAME_TO_RESTRICTION,
+} from './services/profileService'
 import './Profile.css'
 
 const goals = [
@@ -190,29 +197,94 @@ function SelectableCard({
   )
 }
 
-export default function Profile() {
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([])
+export default function Profile({ onRequireAuth }: { onRequireAuth: () => void }) {
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null)
   const [selectedRestrictions, setSelectedRestrictions] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
-  const toggleGoal = (id: string) =>
-    setSelectedGoals(prev => prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id])
+  useEffect(() => {
+    profileService.get()
+      .then(data => {
+        if (data.goal) setSelectedGoal(BACKEND_TO_GOAL[data.goal] ?? null)
+        setSelectedRestrictions(
+          data.dietaryRestrictions
+            .map(tag => TAG_NAME_TO_RESTRICTION[tag.name])
+            .filter(Boolean)
+        )
+      })
+      .catch(err => {
+        if (err instanceof Error && err.message.includes('403')) {
+          onRequireAuth()
+        } else {
+          setError('Nu s-a putut încărca profilul.')
+        }
+      })
+      .finally(() => setLoading(false))
+  }, [onRequireAuth])
 
-  const toggleRestriction = (id: string) =>
-    setSelectedRestrictions(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id])
+  function toggleGoal(id: string) {
+    setSelectedGoal(prev => (prev === id ? null : id))
+    setSuccess(false)
+  }
+
+  function toggleRestriction(id: string) {
+    setSelectedRestrictions(prev =>
+      prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+    )
+    setSuccess(false)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setError('')
+    setSuccess(false)
+    try {
+      const tagIds = selectedRestrictions
+        .map(r => RESTRICTION_TO_TAG_ID[r])
+        .filter((id): id is number => id !== undefined)
+
+      await profileService.update({
+        goal: selectedGoal ? GOAL_TO_BACKEND[selectedGoal] : undefined,
+        dietaryRestrictionTagIds: tagIds,
+      })
+      setSuccess(true)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('403')) {
+        onRequireAuth()
+      } else {
+        setError('Nu s-a putut salva profilul. Încearcă din nou.')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="profile-page">
+        <div className="profile-header">
+          <p style={{ color: '#71717a' }}>Se încarcă profilul…</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="profile-page">
       <div className="profile-header">
         <h1>Configurează-ți profilul</h1>
-        <p>Selectează obiectivele și restricțiile tale pentru rețete personalizate</p>
+        <p>Selectează obiectivul și restricțiile tale pentru rețete personalizate</p>
       </div>
 
       <div className="profile-body">
         <section>
-          <h2 className="profile-section-title">Obiectivele tale</h2>
+          <h2 className="profile-section-title">Obiectivul tău</h2>
           <div className="goals-grid">
             {goals.map(g => (
-              <SelectableCard key={g.id} {...g} selected={selectedGoals.includes(g.id)} onToggle={toggleGoal} />
+              <SelectableCard key={g.id} {...g} selected={selectedGoal === g.id} onToggle={toggleGoal} />
             ))}
           </div>
         </section>
@@ -226,9 +298,12 @@ export default function Profile() {
           </div>
         </section>
 
+        {error && <p className="profile-error">{error}</p>}
+        {success && <p className="profile-success">Profilul a fost salvat cu succes!</p>}
+
         <div className="profile-cta">
-          <button className="profile-btn">
-            Vezi rețetele mele →
+          <button className="profile-btn" onClick={handleSave} disabled={saving}>
+            {saving ? 'Se salvează…' : 'Salvează profilul →'}
           </button>
         </div>
       </div>

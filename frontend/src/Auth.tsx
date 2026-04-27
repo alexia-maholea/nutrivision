@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { authService } from './services/authService'
 import './Auth.css'
 
 type Mode = 'login' | 'register'
@@ -26,10 +27,53 @@ function EyeIcon({ visible }: { visible: boolean }) {
   )
 }
 
-export default function Auth({ onClose }: { onClose: () => void }) {
+export default function Auth({
+  onClose,
+  onAuthSuccess,
+}: {
+  onClose: () => void
+  onAuthSuccess: (token: string) => void
+}) {
   const [mode, setMode] = useState<Mode>('login')
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  function switchMode(next: Mode) {
+    setMode(next)
+    setError('')
+    setPassword('')
+    setConfirm('')
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+
+    if (mode === 'register' && password !== confirm) {
+      setError('Parolele nu coincid.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      if (mode === 'register') {
+        await authService.register(name, email, password)
+      }
+      const res = await authService.login(email, password)
+      localStorage.setItem('token', res.access_token)
+      onAuthSuccess(res.access_token)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'A apărut o eroare. Încearcă din nou.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="auth-page">
@@ -50,30 +94,46 @@ export default function Auth({ onClose }: { onClose: () => void }) {
         <div className="auth-toggle">
           <button
             className={mode === 'login' ? 'active' : ''}
-            onClick={() => setMode('login')}
+            onClick={() => switchMode('login')}
           >
             Autentificare
           </button>
           <button
             className={mode === 'register' ? 'active' : ''}
-            onClick={() => setMode('register')}
+            onClick={() => switchMode('register')}
           >
             Cont nou
           </button>
         </div>
 
         {/* Form */}
-        <form className="auth-form" onSubmit={e => e.preventDefault()}>
+        <form className="auth-form" onSubmit={handleSubmit}>
           {mode === 'register' && (
             <div className="field">
               <label htmlFor="name">Nume complet</label>
-              <input id="name" type="text" placeholder="Ana Ionescu" autoComplete="name" />
+              <input
+                id="name"
+                type="text"
+                placeholder="Ana Ionescu"
+                autoComplete="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+              />
             </div>
           )}
 
           <div className="field">
             <label htmlFor="email">Adresă de email</label>
-            <input id="email" type="email" placeholder="ana@email.com" autoComplete="email" />
+            <input
+              id="email"
+              type="email"
+              placeholder="ana@email.com"
+              autoComplete="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           </div>
 
           <div className="field">
@@ -84,6 +144,9 @@ export default function Auth({ onClose }: { onClose: () => void }) {
                 type={showPass ? 'text' : 'password'}
                 placeholder="Minim 8 caractere"
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
               />
               <button type="button" className="eye-btn" onClick={() => setShowPass(v => !v)}>
                 <EyeIcon visible={showPass} />
@@ -100,6 +163,9 @@ export default function Auth({ onClose }: { onClose: () => void }) {
                   type={showConfirm ? 'text' : 'password'}
                   placeholder="Repetă parola"
                   autoComplete="new-password"
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  required
                 />
                 <button type="button" className="eye-btn" onClick={() => setShowConfirm(v => !v)}>
                   <EyeIcon visible={showConfirm} />
@@ -114,14 +180,16 @@ export default function Auth({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          <button type="submit" className="auth-submit">
-            {mode === 'login' ? 'Conectează-te' : 'Creează cont'} →
+          {error && <p className="auth-error">{error}</p>}
+
+          <button type="submit" className="auth-submit" disabled={loading}>
+            {loading ? 'Se încarcă…' : mode === 'login' ? 'Conectează-te' : 'Creează cont'} {!loading && '→'}
           </button>
         </form>
 
         <p className="auth-switch">
           {mode === 'login' ? 'Nu ai cont?' : 'Ai deja cont?'}{' '}
-          <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+          <button onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}>
             {mode === 'login' ? 'Înregistrează-te' : 'Autentifică-te'}
           </button>
         </p>
